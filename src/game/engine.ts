@@ -5,6 +5,7 @@ export type Lane = { row: number; cars: Car[] };
 export type Game = {
   id: string;
   row: number;
+  camera: number;
   furthest: number;
   time: number;
   lanes: Lane[];
@@ -44,6 +45,7 @@ export function createGame(width: number): Game {
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2),
     row: 0,
+    camera: 0,
     furthest: 0,
     time: 0,
     lanes: Array.from({ length: 10 }, (_, i) => lane(i + 1, width)),
@@ -165,6 +167,10 @@ export function tick(game: Game, dt: number, width: number) {
         : 1;
     game.moving = Math.max(game.moving, game.streak);
     game.lastCross = game.time;
+  }
+  if (!game.crashed) {
+    const target = Math.max(0, game.furthest - 3);
+    game.camera = Math.min(target, game.camera + dt / 0.18);
   }
 }
 export function summary(game: Game): RunSummary {

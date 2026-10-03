@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   BackHandler,
   Image,
-  ImageBackground,
   PanResponder,
   StyleSheet,
   Text,
@@ -25,6 +24,7 @@ import { boosts, chickens, highways, vehicles, BoostId } from '../data/catalog';
 import { Button, colors, ui } from '../components/ui';
 import { useProgress } from '../state/ProgressProvider';
 import { activate, createGame, move, summary, tick } from '../game/engine';
+import { VISIBLE_ROWS, rowTop, visibleRows, roadTiles } from '../game/viewport';
 import { Sound, SoundHandle } from '../services/Sound';
 export function GameScreen({
   navigation,
@@ -55,9 +55,9 @@ export function GameScreen({
   settings.current = state;
   const exit = useRef(() => {});
   const checkpoint = useRef(() => {});
-  const cell = boardHeight / 7;
-  const bottom = Math.max(0, game.furthest - 3);
-  const chickenY = (6 - (game.row - bottom)) * cell;
+  const cell = boardHeight / VISIBLE_ROWS;
+  const chickenY = rowTop(game.row, game.camera, cell);
+  const highway = highways.find(h => h.id === state.highway)!;
   const finish = () => {
     if (finished.current) {
       return;
@@ -139,16 +139,22 @@ export function GameScreen({
       move(game, direction, width);
     }
   };
-  const pan = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderRelease: (_, g) => {
-      if (Math.abs(g.dx) > Math.max(30, Math.abs(g.dy))) {
-        return;
-      }
-      cross(g.dy > 25 ? -1 : 1);
-    },
-  });
+  const crossRef = useRef(cross);
+  crossRef.current = cross;
+  const pan = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onPanResponderRelease: (_, g) => {
+          if (Math.abs(g.dx) > Math.max(30, Math.abs(g.dy))) {
+            return;
+          }
+          crossRef.current(g.dy > 25 ? -1 : 1);
+        },
+      }),
+    [],
+  );
   const activateBoost = (id: BoostId) => {
     if (!paused && state.boosts[id] > 0 && activate(game, id)) {
       setFeedback({
@@ -255,19 +261,31 @@ export function GameScreen({
         onLayout={e => setBoardHeight(e.nativeEvent.layout.height)}
         {...pan.panHandlers}
       >
-        <ImageBackground
-          source={highways.find(h => h.id === state.highway)!.image}
-          resizeMode="stretch"
-          style={StyleSheet.absoluteFill}
-        >
-          {Array.from({ length: 7 }, (_, i) => {
-            const row = bottom + i;
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          {roadTiles(game.camera, cell).map(tile => (
+            <Image
+              key={tile.id}
+              source={highway.image}
+              resizeMode="stretch"
+              style={{
+                position: 'absolute',
+                left: 0,
+                top: tile.top,
+                width,
+                height: boardHeight,
+              }}
+            />
+          ))}
+          {visibleRows(game.camera).map(row => {
             const lane = game.lanes.find(l => l.row === row);
             return (
               <View
                 pointerEvents="none"
                 key={row}
-                style={[styles.lane, { top: (6 - i) * cell, height: cell }]}
+                style={[
+                  styles.lane,
+                  { top: rowTop(row, game.camera, cell), height: cell },
+                ]}
               >
                 {row === 0 ? (
                   <Text style={styles.start}>START · TAP TO CROSS</Text>
@@ -374,7 +392,7 @@ export function GameScreen({
               </Text>
             </Motion>
           )}
-        </ImageBackground>
+        </View>
       </View>
       <View
         style={[
