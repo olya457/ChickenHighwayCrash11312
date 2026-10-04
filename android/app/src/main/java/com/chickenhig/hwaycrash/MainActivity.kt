@@ -1,4 +1,4 @@
-package com.chickenhighwaycrash
+package com.chickenhig.hwaycrash
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity
