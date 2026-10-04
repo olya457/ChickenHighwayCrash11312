@@ -1,4 +1,4 @@
-package com.chickenhig.hwaycrash
+package com.featheredhighway
 
 import android.os.Bundle
 import com.facebook.react.ReactActivity

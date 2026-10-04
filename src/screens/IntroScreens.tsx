@@ -78,8 +78,8 @@ export function LoaderScreen({ onDone }: { onDone: () => void }) {
               { fontSize: 36 * scale, lineHeight: 40 * scale },
             ]}
           >
-            <Text style={styles.brandTop}>Chicken</Text>
-            {'\n'}Highway Crash
+            <Text style={styles.brandTop}>Feathered</Text>
+            {'\n'}Highway
           </Text>
         </Motion>
         <View

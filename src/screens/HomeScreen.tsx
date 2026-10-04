@@ -71,9 +71,9 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={styles.gear}>⚙</Text>
           </Pressable>
           <View style={styles.grow}>
-            <Text style={styles.brandSmall}>Chicken</Text>
+            <Text style={styles.brandSmall}>Feathered</Text>
             <Text style={[styles.brand, compact && { fontSize: 14 }]}>
-              Highway Crash
+              Highway
             </Text>
           </View>
           <Motion
